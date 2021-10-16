@@ -1,0 +1,80 @@
+version: '3.8'
+volumes:
+  desafio1_6_mongo_vol:
+  desafio1_6_postgresql_vol:  
+
+  
+networks:
+  desafio_6_net:
+    driver: bridge
+
+services:
+  mongo:
+    image: mongo:4.4.3
+    ports:
+    - 27017:27017
+    networks:
+      - desafio_6_net
+    volumes:
+      - desafio1_6_mongo_vol:/data/db  
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+  
+  postgresql:
+    container_name: pg_container
+    image: postgres:14.0
+    restart: always
+    ports:
+    - 5432:5432
+    networks:
+      - desafio_6_net
+    volumes:
+      - desafio1_6_postgresql_vol:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: Pg@123;
+      POSTGRES_DB: pguser    
+   
+  rotten-potatoes:
+    image: jchelp/desafio1-rotten-potatoes-ms:${TAG}
+    ports:
+    - 8080:8080
+    networks:
+      - desafio_6_net
+    depends_on:
+      - mongo
+      - postgresql
+      - movies
+    environment:
+      MOVIE_SERVICE_URI: ${MOVIE_SERVICE_URI}
+      REVIEW_SERVICE_URI: ${REVIEW_SERVICE_URI}
+      
+  
+  movies:
+    image: jchelp/desafio1-movie:${TAG}
+    container_name: movies
+    ports:
+    - 8181:8181
+    networks:
+      - desafio_6_net
+    depends_on:
+      - mongo
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+  
+  review:
+    image: jchelp/desafio1-review:${TAG}
+    container_name: review
+    ports:
+    - 80:80
+    networks:
+      - desafio_6_net
+    depends_on:
+      - postgresql
+    environment:
+      ConnectionStrings__MyConnection: ${ConnectionStrings__MyConnection}  
+        
+    
+      
+  
